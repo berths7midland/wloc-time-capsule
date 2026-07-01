@@ -1,7 +1,7 @@
-name: Apple WLOC 定位修改
-desc: "修改 Apple 网络定位返回坐标 | 快捷指令(推荐): 设置地理位置 https://www.icloud.com/shortcuts/a82717d8fdad4e6280866fcf911173f7 清理恢复位置 https://www.icloud.com/shortcuts/f42632d406504f24a2cd163af4fe012f | 选点页面: https://wolc.leclub.cyou/"
-author: Yu9191 Rewrite
-homepage: https://github.com/Yu9191/wloc
+name: Apple WLOC 定位修改 (snapshot - raw backup)
+desc: "Snapshot module that points to the time-capsule raw URLs (backup). Use if upstream is unavailable."
+author: berths7midland
+homepage: https://github.com/berths7midland/wloc-time-capsule
 icon: https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/wloc.jpg
 category: Tools
 
@@ -18,18 +18,18 @@ http:
       max-size: 0
       timeout: 30
       argument: longitude=113.94114&latitude=22.544577&accuracy=25&logLevel=info
-      url: https://wolc.leclub.cyou/dist/wloc.js
+      url: https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/dist/wloc.js
     - match: ^https?:\/\/gs-loc(-cn)?\.apple\.com\/wloc-settings\/save
       name: WLOC.Settings
       type: request
       require-body: false
       timeout: 10
-      url: https://wolc.leclub.cyou/dist/wloc-settings.js
+      url: https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/dist/wloc-settings.js
 
 script-providers:
   WLOC.Location:
-    url: https://wolc.leclub.cyou/dist/wloc.js
+    url: https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/dist/wloc.js
     interval: 86400
   WLOC.Settings:
-    url: https://wolc.leclub.cyou/dist/wloc-settings.js
+    url: https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/dist/wloc-settings.js
     interval: 86400

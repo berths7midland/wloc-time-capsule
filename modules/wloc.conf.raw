@@ -1,0 +1,12 @@
+#!name=Apple WLOC 定位修改 (snapshot - raw backup)
+#!desc=Snapshot module that points to the time-capsule raw URLs (backup). Use if upstream is unavailable.
+#!author=berths7midland
+#!homepage=https://github.com/berths7midland/wloc-time-capsule
+#!icon=https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/wloc.jpg
+
+[rewrite_local]
+^https?:\/\/gs-loc(-cn)?\.apple\.com\/clls\/wloc url script-response-body https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/dist/wloc.js
+^https?:\/\/gs-loc(-cn)?\.apple\.com\/wloc-settings\/save url script-echo-response https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/dist/wloc-settings.js
+
+[mitm]
+hostname = gs-loc.apple.com, gs-loc-cn.apple.com
