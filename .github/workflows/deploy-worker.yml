@@ -1,0 +1,35 @@
+name: Deploy Cloudflare Worker
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload Worker script to Cloudflare
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CF_API_TOKEN" ] || [ -z "$CF_ACCOUNT_ID" ]; then
+            echo "Error: CF_API_TOKEN and CF_ACCOUNT_ID must be set in repository secrets." >&2
+            exit 1
+          fi
+          echo "Uploading worker/worker.js to Cloudflare account $CF_ACCOUNT_ID as script name wloc-dist-proxy..."
+          STATUS=$(curl -s -w "%{http_code}" -o /tmp/resp.txt -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/workers/scripts/wloc-dist-proxy" \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            -H "Content-Type: application/javascript" \
+            --data-binary @worker/worker.js)
+          BODY=$(cat /tmp/resp.txt)
+          echo "Response HTTP status: $STATUS"
+          echo "$BODY"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
+            echo "Worker uploaded successfully."
+          else
+            echo "Upload failed with status $STATUS" >&2
+            exit 1
+          fi
