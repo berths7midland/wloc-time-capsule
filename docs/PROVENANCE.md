@@ -28,8 +28,8 @@ Published files in `modules/`, `dist/`, `worker/`, and `wloc.jpg` were copied fr
 
 Local edits:
 
-- Module homepage/icon/script URLs now point to `https://github.com/legclub/wloc-timecapsule` and its raw file URLs.
+- Module homepage/icon/script URLs now point to `https://github.com/berths7midland/wloc-time-capsule` and its raw file URLs.
 - Module selection page URLs now point to `https://wloc.legclub.cyou/`.
-- Worker config name changed from `wloc-spoofer` to `wloc-timecapsule`.
+- Worker config name changed from `wloc-spoofer` to `wloc-time-capsule`.
 - Upstream evidence files under `upstream/` were not edited.
 

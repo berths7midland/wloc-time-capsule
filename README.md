@@ -1,4 +1,4 @@
-# wloc-timecapsule
+# wloc-time-capsule
 
 This repository is a frozen, self-controlled snapshot of `Yu9191/wloc` for personal use.
 
@@ -11,7 +11,7 @@ This repository is a frozen, self-controlled snapshot of `Yu9191/wloc` for perso
 - Commit date: `2026-06-27T23:50:28Z`
 - Local snapshot date: `2026-07-01`
 - Worker domain: `https://wloc.legclub.cyou/`
-- Default repository name: `legclub/wloc-timecapsule`
+- Default repository name: `berths7midland/wloc-time-capsule`
 
 The unmodified upstream archive is kept under `upstream/`. `UPSTREAM_README.md` is a direct copy of the upstream README from the frozen commit.
 
@@ -19,11 +19,11 @@ The unmodified upstream archive is kept under `upstream/`. `UPSTREAM_README.md` 
 
 After pushing this repository to GitHub, use these module URLs:
 
-- Surge: `https://raw.githubusercontent.com/legclub/wloc-timecapsule/refs/heads/main/modules/wloc.sgmodule`
-- Quantumult X: `https://raw.githubusercontent.com/legclub/wloc-timecapsule/refs/heads/main/modules/wloc.conf`
-- Loon: `https://raw.githubusercontent.com/legclub/wloc-timecapsule/refs/heads/main/modules/wloc.lpx`
-- Stash: `https://raw.githubusercontent.com/legclub/wloc-timecapsule/refs/heads/main/modules/wloc.stoverride`
-- Shadowrocket: `https://raw.githubusercontent.com/legclub/wloc-timecapsule/refs/heads/main/modules/wloc.module`
+- Surge: `https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/modules/wloc.sgmodule`
+- Quantumult X: `https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/modules/wloc.conf`
+- Loon: `https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/modules/wloc.lpx`
+- Stash: `https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/modules/wloc.stoverride`
+- Shadowrocket: `https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/modules/wloc.module`
 
 ## Worker
 
@@ -33,7 +33,7 @@ Important files:
 
 - `worker/src/parse.js`: parses Apple Maps / AMap links, follows redirects, extracts coordinates, and converts GCJ-02 to WGS84 when needed.
 - `worker/src/index.js`: exposes `/api/parse`.
-- `worker/wrangler.jsonc`: Cloudflare Workers config using the name `wloc-timecapsule`.
+- `worker/wrangler.jsonc`: Cloudflare Workers config using the name `wloc-time-capsule`.
 
 Test endpoint:
 
