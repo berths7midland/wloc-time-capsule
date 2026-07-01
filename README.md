@@ -13,17 +13,17 @@ This repository is a frozen, self-controlled snapshot of `Yu9191/wloc` for perso
 - Worker domain: `https://wloc.legclub.cyou/`
 - Default repository name: `berths7midland/wloc-time-capsule`
 
-The unmodified upstream archive is kept under `upstream/`. `UPSTREAM_README.md` is a direct copy of the upstream README from the frozen commit.
+The unmodified upstream archive is kept as `upstream/Yu9191-wloc-eec07a8.zip`. Expanded upstream text files are not committed, so this repository does not expose GitHub raw URLs in working-tree text.
 
 ## Subscriptions
 
-After pushing this repository to GitHub, use these module URLs:
+Use these module URLs from your Cloudflare Worker:
 
-- Surge: `https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/modules/wloc.sgmodule`
-- Quantumult X: `https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/modules/wloc.conf`
-- Loon: `https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/modules/wloc.lpx`
-- Stash: `https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/modules/wloc.stoverride`
-- Shadowrocket: `https://raw.githubusercontent.com/berths7midland/wloc-time-capsule/refs/heads/main/modules/wloc.module`
+- Surge: `https://wloc.legclub.cyou/modules/wloc.sgmodule`
+- Quantumult X: `https://wloc.legclub.cyou/modules/wloc.conf`
+- Loon: `https://wloc.legclub.cyou/modules/wloc.lpx`
+- Stash: `https://wloc.legclub.cyou/modules/wloc.stoverride`
+- Shadowrocket: `https://wloc.legclub.cyou/modules/wloc.module`
 
 ## Worker
 
@@ -43,7 +43,7 @@ https://wloc.legclub.cyou/api/parse?u=<encoded map url>&format=json
 
 ## Audit Rules
 
-1. Do not point module `script-path` values at upstream `Yu9191/wloc/main`.
+1. Do not use the GitHub raw CDN in published modules, scripts, icons, or docs.
 2. Do not auto-sync upstream changes.
 3. For every future update, record the upstream commit, changed files, reason, and file hashes.
 4. Keep `upstream/` immutable as evidence for this snapshot.
