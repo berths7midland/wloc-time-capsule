@@ -24,8 +24,9 @@ Published files in `modules/`, `dist/`, `worker/`, and `wloc.jpg` were copied fr
 
 Local edits:
 
-- Module script/icon/subscription URLs now point to `https://wloc.legclub.cyou/`, so the Cloudflare Pages deployment can serve modules, scripts, and the icon without relying on GitHub raw at runtime.
+- Module script/icon/subscription URLs now point to `https://wloc.legclub.cyou/`, where the production Worker serves modules, scripts, and the icon without relying on GitHub raw at runtime.
 - Module selection page URLs now point to `https://wloc.legclub.cyou/`.
-- Worker config name changed from `wloc-spoofer` to `wloc-time-capsule`.
-- Cloudflare Pages output is prepared under `worker/dist/`, with `_routes.json` excluding `/modules/*`, `/dist/*`, and `/wloc.jpg` from Functions routing so those paths are served as static assets.
+- Worker deployments target the existing `wloc-spoofer` production service that owns `wloc.legclub.cyou`.
+- Production uses the Worker as the single runtime target; its generated asset bundle serves the module, scripts, icon, picker, and API without depending on a separate Pages deployment.
+- Optional Cloudflare Pages output can still be prepared under `worker/dist/`, but it is not part of the production deployment path.
 - Upstream evidence files under `upstream/` were not edited.

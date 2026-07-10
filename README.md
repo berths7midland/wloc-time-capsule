@@ -33,13 +33,19 @@ Important files:
 
 - `worker/src/parse.js`: parses Apple Maps / AMap links, follows redirects, extracts coordinates, and converts GCJ-02 to WGS84 when needed.
 - `worker/src/index.js`: exposes `/api/parse`.
-- `worker/wrangler.jsonc`: Cloudflare Workers config using the name `wloc-time-capsule`.
+- `worker/wrangler.jsonc`: Cloudflare Workers config using the existing production service name `wloc-spoofer`.
 
 Test endpoint:
 
 ```text
 https://wloc.legclub.cyou/api/parse?u=<encoded map url>&format=json
 ```
+
+## Deployment
+
+Production is a single Cloudflare Worker named `wloc-spoofer`; the custom domain and all static assets are served by that Worker. Run `npm run deploy` from `worker/` after `wrangler login`.
+
+The GitHub workflow is manual-only to prevent unauthenticated pushes from creating failed or competing deployments. It requires the repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (the `CF_*` aliases are also accepted), serializes production releases, pins Wrangler, and retries transient network failures up to three times.
 
 ## Audit Rules
 
