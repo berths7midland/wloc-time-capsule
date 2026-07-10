@@ -1,17 +1,42 @@
-import { Hono } from "hono/tiny";
+import { getAsset } from "./assets.generated.js";
 import { getPageHtml } from "./page.js";
 import { parseCoords, gcj02ToWgs84, round6 } from "./parse.js";
 
-const app = new Hono();
+function text(body, status = 200, headers = {}) {
+  return new Response(body, {
+    status,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      ...headers,
+    },
+  });
+}
 
-app.get("/", (c) => {
-  return c.html(getPageHtml());
-});
+function json(body, status = 200, headers = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      ...headers,
+    },
+  });
+}
 
-app.get("/api/parse", async (c) => {
-  const raw = c.req.query("u") || "";
-  const cs = (c.req.query("cs") || "").toLowerCase();
-  const fmt = (c.req.query("format") || "").toLowerCase();
+function assetResponse(asset, cacheControl) {
+  return new Response(asset.body, {
+    headers: {
+      "content-type": asset.contentType,
+      "cache-control": cacheControl,
+    },
+  });
+}
+
+async function handleParse(url) {
+  const raw = url.searchParams.get("u") || "";
+  const cs = (url.searchParams.get("cs") || "").toLowerCase();
+  const fmt = (url.searchParams.get("format") || "").toLowerCase();
+  const cors = { "access-control-allow-origin": "*" };
+
   try {
     let { lat, lon, name, src } = await parseCoords(raw);
     const needConv = cs === "gcj" || (cs !== "none" && (src === "amap" || src === "apple"));
@@ -19,18 +44,43 @@ app.get("/api/parse", async (c) => {
     lat = round6(lat);
     lon = round6(lon);
     name = name || "";
-    c.header("Access-Control-Allow-Origin", "*");
-    if (fmt === "json") return c.json({ lat, lon, name });
-    return c.text(`lat=${lat}&lon=${lon}`);
+    if (fmt === "json") return json({ lat, lon, name }, 200, cors);
+    return text(`lat=${lat}&lon=${lon}`, 200, cors);
   } catch (e) {
-    c.header("Access-Control-Allow-Origin", "*");
-    return c.json({ error: String(e && e.message ? e.message : e) }, 422);
+    return json({ error: String(e && e.message ? e.message : e) }, 422, cors);
   }
-});
+}
 
-app.onError((e, c) => {
-  console.error(`${e}`);
-  return c.text(`${e}`, 500);
-});
+async function handleRequest(request) {
+  const url = new URL(request.url);
+  const path = url.pathname;
 
-export default app;
+  if (path === "/") {
+    return new Response(getPageHtml(), {
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
+  }
+
+  if (path === "/api/parse") return handleParse(url);
+
+  if (path === "/wloc.jpg") {
+    const asset = getAsset(path);
+    if (!asset) return text("404 Not Found", 404);
+    return assetResponse(asset, "public, max-age=86400");
+  }
+
+  if (path.startsWith("/dist/") || path.startsWith("/modules/")) {
+    const asset = getAsset(path);
+    if (!asset) return text("404 Not Found", 404);
+    return assetResponse(
+      asset,
+      path.startsWith("/dist/") ? "public, max-age=86400" : "public, max-age=300",
+    );
+  }
+
+  return text("404 Not Found", 404);
+}
+
+export default {
+  fetch: handleRequest,
+};
