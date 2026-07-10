@@ -1,7 +1,8 @@
+#!url=https://wloc.legclub.cyou/modules/wloc.module
 #!name=Apple WLOC 定位修改
-#!desc=修改 Apple 网络定位返回坐标 (Shadowrocket 小火箭) | 快捷指令(推荐): 设置地理位置 https://www.icloud.com/shortcuts/a82717d8fdad4e6280866fcf911173f7 清理恢复位置 https://www.icloud.com/shortcuts/f42632d406504f24a2cd163af4fe012f | 选点页面: https://wloc.legclub.cyou/
+#!desc=自托管的 Apple 网络定位坐标修改模块 (Shadowrocket) | 选点页面: https://wloc.legclub.cyou/ | Pages 备用: https://wloc-time-capsule.pages.dev/
 #!author=berths7midland Time Capsule
-#!homepage=https://wloc.legclub.cyou/
+#!homepage=https://github.com/berths7midland/wloc-time-capsule
 #!icon=https://wloc.legclub.cyou/wloc.jpg
 #!category=Tools
 

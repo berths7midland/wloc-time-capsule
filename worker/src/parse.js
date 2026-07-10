@@ -11,6 +11,53 @@ export function safeDecode(s) {
   }
 }
 
+const ALLOWED_FETCH_HOSTS = new Set(["amap.com", "maps.apple.com", "maps.apple.com.cn"]);
+const ALLOWED_FETCH_SUFFIXES = [".amap.com"];
+const MAX_REMOTE_BODY_BYTES = 128 * 1024;
+
+function assertSafeFetchUrl(value) {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("Invalid map URL");
+  }
+  const host = url.hostname.toLowerCase();
+  const allowed = ALLOWED_FETCH_HOSTS.has(host) || ALLOWED_FETCH_SUFFIXES.some((suffix) => host.endsWith(suffix));
+  if (url.protocol !== "https:" || url.username || url.password || (url.port && url.port !== "443") || !allowed) {
+    throw new Error("Unsupported map host");
+  }
+  return url;
+}
+
+async function readTextLimited(response) {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let total = 0;
+  let text = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_REMOTE_BODY_BYTES) {
+      await reader.cancel();
+      throw new Error("Map response is too large");
+    }
+    text += decoder.decode(value, { stream: true });
+  }
+  return text + decoder.decode();
+}
+
+function hit(lat, lon, name, src) {
+  lat = Number(lat);
+  lon = Number(lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    return null;
+  }
+  return { lat, lon, name: name || "", src };
+}
+
 // 从一段字符串里提取经纬度+名称。兼容:
 //  苹果地图 coordinate=/ll=/sll=纬度,经度  (名称在 name=...)
 //  高德 ?p=POIID,纬度,经度,名称,城市  (逗号或 %2C)
@@ -23,18 +70,18 @@ export function extractFromString(s) {
   m = str.match(/(?:coordinate|ll|sll)=(-?\d{1,3}\.\d+)(?:,|%2C)(-?\d{1,3}\.\d+)/i);
   if (m) {
     const nm = str.match(/[?&]name=([^&]+)/i);
-    return { lat: +m[1], lon: +m[2], name: nm ? safeDecode(nm[1]) : "", src: "apple" };
+    return hit(m[1], m[2], nm ? safeDecode(nm[1]) : "", "apple");
   }
   m = str.match(
     /[?&]p=[^,&%]*(?:,|%2C)(-?\d{1,3}\.\d+)(?:,|%2C)(-?\d{1,3}\.\d+)(?:(?:,|%2C)((?:(?!,|%2C|&).)+))?/i
   );
-  if (m) return { lat: +m[1], lon: +m[2], name: m[3] ? safeDecode(m[3]) : "", src: "amap" };
+  if (m) return hit(m[1], m[2], m[3] ? safeDecode(m[3]) : "", "amap");
   m = str.match(
     /[?&]q=(-?\d{1,3}\.\d+)(?:,|%2C)(-?\d{1,3}\.\d+)(?:(?:,|%2C)((?:(?!,|%2C|&).)+))?/i
   );
-  if (m) return { lat: +m[1], lon: +m[2], name: m[3] ? safeDecode(m[3]) : "", src: "amap" };
+  if (m) return hit(m[1], m[2], m[3] ? safeDecode(m[3]) : "", "amap");
   m = str.match(/(-?\d{1,3}\.\d{4,})\s*(?:,|%2C)\s*(-?\d{1,3}\.\d{4,})/);
-  if (m) return { lat: +m[1], lon: +m[2], name: "", src: "text" };
+  if (m) return hit(m[1], m[2], "", "text");
   return null;
 }
 
@@ -52,6 +99,7 @@ export async function parseCoords(raw) {
   if (urlMatch) {
     let cur = target;
     for (let i = 0; i < 5; i++) {
+      cur = assertSafeFetchUrl(cur).toString();
       let resp;
       try {
         resp = await fetch(cur, {
@@ -70,7 +118,7 @@ export async function parseCoords(raw) {
       if (loc) {
         hit = extractFromString(loc);
         if (hit) return hit;
-        cur = new URL(loc, cur).toString();
+        cur = assertSafeFetchUrl(new URL(loc, cur).toString()).toString();
         hit = extractFromString(cur);
         if (hit) return hit;
         continue;
@@ -78,10 +126,12 @@ export async function parseCoords(raw) {
       hit = extractFromString(resp.url);
       if (hit) return hit;
       try {
-        const body = await resp.text();
+        const body = await readTextLimited(resp);
         hit = extractFromString(body);
         if (hit) return hit;
-      } catch (e) {}
+      } catch (e) {
+        if (e && e.message === "Map response is too large") throw e;
+      }
       break;
     }
   }

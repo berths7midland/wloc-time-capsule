@@ -9,11 +9,13 @@ const out = join(workerRoot, "dist");
 const generatedAssetModule = join(workerRoot, "src", "assets.generated.js");
 
 const contentTypes = new Map([
+  [".css", "text/css; charset=utf-8"],
   [".conf", "text/plain; charset=utf-8"],
   [".jpg", "image/jpeg"],
   [".js", "application/javascript; charset=utf-8"],
   [".lpx", "text/plain; charset=utf-8"],
   [".module", "text/plain; charset=utf-8"],
+  [".png", "image/png"],
   [".sgmodule", "text/plain; charset=utf-8"],
   [".stoverride", "text/yaml; charset=utf-8"],
 ]);
@@ -25,16 +27,24 @@ function contentTypeFor(path) {
 
 async function collectAssets() {
   const assets = {};
-  for (const dir of ["modules", "dist"]) {
-    for (const entry of await readdir(join(repoRoot, dir), { withFileTypes: true })) {
+  async function collectDir(sourceDir, publicDir) {
+    for (const entry of await readdir(sourceDir, { withFileTypes: true })) {
+      const sourcePath = join(sourceDir, entry.name);
+      const publicPath = `${publicDir}/${entry.name}`;
+      if (entry.isDirectory()) {
+        await collectDir(sourcePath, publicPath);
+        continue;
+      }
       if (!entry.isFile()) continue;
-      const publicPath = `/${dir}/${entry.name}`;
-      const bytes = await readFile(join(repoRoot, dir, entry.name));
+      const bytes = await readFile(sourcePath);
       assets[publicPath] = {
         contentType: contentTypeFor(publicPath),
         base64: bytes.toString("base64"),
       };
     }
+  }
+  for (const dir of ["modules", "dist", "vendor"]) {
+    await collectDir(join(repoRoot, dir), `/${dir}`);
   }
   const iconBytes = await readFile(join(repoRoot, "wloc.jpg"));
   assets["/wloc.jpg"] = {
@@ -49,14 +59,21 @@ await mkdir(out, { recursive: true });
 
 await cp(join(repoRoot, "modules"), join(out, "modules"), { recursive: true });
 await cp(join(repoRoot, "dist"), join(out, "dist"), { recursive: true });
+await cp(join(repoRoot, "vendor"), join(out, "vendor"), { recursive: true });
 await cp(join(repoRoot, "wloc.jpg"), join(out, "wloc.jpg"));
 await writeFile(
   join(out, "_routes.json"),
   `${JSON.stringify({
     version: 1,
     include: ["/*"],
-    exclude: ["/modules/*", "/dist/*", "/wloc.jpg"],
+    exclude: ["/modules/*", "/dist/*", "/vendor/*", "/wloc.jpg"],
   })}\n`,
+);
+await writeFile(
+  join(out, "_headers"),
+  "/modules/*\n  Content-Type: text/plain; charset=utf-8\n  X-Content-Type-Options: nosniff\n\n" +
+    "/dist/*\n  Content-Type: application/javascript; charset=utf-8\n  X-Content-Type-Options: nosniff\n\n" +
+    "/vendor/*\n  X-Content-Type-Options: nosniff\n",
 );
 await writeFile(
   generatedAssetModule,

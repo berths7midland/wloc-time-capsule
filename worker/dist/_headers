@@ -1,0 +1,10 @@
+/modules/*
+  Content-Type: text/plain; charset=utf-8
+  X-Content-Type-Options: nosniff
+
+/dist/*
+  Content-Type: application/javascript; charset=utf-8
+  X-Content-Type-Options: nosniff
+
+/vendor/*
+  X-Content-Type-Options: nosniff

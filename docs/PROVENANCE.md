@@ -27,6 +27,9 @@ Local edits:
 - Module script/icon/subscription URLs now point to `https://wloc.legclub.cyou/`, where the production Worker serves modules, scripts, and the icon without relying on GitHub raw at runtime.
 - Module selection page URLs now point to `https://wloc.legclub.cyou/`.
 - Worker deployments target the existing `wloc-spoofer` production service that owns `wloc.legclub.cyou`.
-- Production uses the Worker as the single runtime target; its generated asset bundle serves the module, scripts, icon, picker, and API without depending on a separate Pages deployment.
-- Optional Cloudflare Pages output can still be prepared under `worker/dist/`, but it is not part of the production deployment path.
+- The Worker remains the primary runtime target; its generated asset bundle serves the module, scripts, icon, picker, and API.
+- The same audited assets are also deployed to the account-owned backup at `https://wloc-time-capsule.pages.dev/` from `worker/dist/`.
+- The public parse API only follows HTTPS redirects on approved Apple Maps and AMap hosts, rejects invalid coordinate ranges, and limits remote response bodies to 128 KiB.
+- Leaflet 1.9.4 JavaScript, CSS, marker images, and license are pinned under `vendor/leaflet/` and served by the account-owned Worker and Pages deployments instead of loading executable code from `unpkg.com`.
+- Upstream shortcut links were removed from published modules because their contents are controlled outside this repository.
 - Upstream evidence files under `upstream/` were not edited.

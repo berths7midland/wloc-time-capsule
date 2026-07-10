@@ -27,6 +27,7 @@ function assetResponse(asset, cacheControl) {
     headers: {
       "content-type": asset.contentType,
       "cache-control": cacheControl,
+      "x-content-type-options": "nosniff",
     },
   });
 }
@@ -57,7 +58,12 @@ async function handleRequest(request) {
 
   if (path === "/") {
     return new Response(getPageHtml(), {
-      headers: { "content-type": "text/html; charset=utf-8" },
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.basemaps.cartocdn.com https://*.is.autonavi.com; connect-src 'self' https://gs-loc.apple.com https://nominatim.openstreetmap.org; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+      },
     });
   }
 
@@ -69,12 +75,12 @@ async function handleRequest(request) {
     return assetResponse(asset, "public, max-age=86400");
   }
 
-  if (path.startsWith("/dist/") || path.startsWith("/modules/")) {
+  if (path.startsWith("/dist/") || path.startsWith("/modules/") || path.startsWith("/vendor/")) {
     const asset = getAsset(path);
     if (!asset) return text("404 Not Found", 404);
     return assetResponse(
       asset,
-      path.startsWith("/dist/") ? "public, max-age=86400" : "public, max-age=300",
+      path.startsWith("/modules/") ? "public, max-age=300" : "public, max-age=86400",
     );
   }
 

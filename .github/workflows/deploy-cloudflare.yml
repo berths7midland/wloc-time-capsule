@@ -26,7 +26,10 @@ jobs:
       - name: Prepare Cloudflare assets
         run: npm run pages:prepare
 
-      - name: Deploy Worker
+      - name: Security checks
+        run: npm test && npm run audit:links
+
+      - name: Deploy Worker and Pages
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CF_API_TOKEN" ]; then
             export CLOUDFLARE_API_TOKEN="$CF_API_TOKEN"
@@ -43,7 +46,7 @@ jobs:
             exit 1
           fi
           for attempt in 1 2 3; do
-            if npx --yes wrangler@4.110.0 deploy --minify; then
+            if npx --yes wrangler@4.110.0 deploy --minify --config=wrangler.worker.jsonc && npx --yes wrangler@4.110.0 pages deploy dist --project-name=wloc-time-capsule --branch=main --commit-dirty=true; then
               exit 0
             fi
             if [ "$attempt" -eq 3 ]; then

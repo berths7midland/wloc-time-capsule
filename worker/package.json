@@ -1,13 +1,16 @@
 {
   "type": "module",
   "scripts": {
+    "audit:links": "node scripts/audit-links.mjs",
+    "test": "node --test --test-isolation=none src/parse.test.mjs",
     "pages:prepare": "node scripts/prepare-pages.mjs",
     "prepages:dev": "npm run pages:prepare",
     "prepages:deploy": "npm run pages:prepare",
     "predeploy": "npm run pages:prepare",
-    "dev": "npx wrangler dev",
-    "deploy": "npx wrangler deploy --minify",
-    "pages:dev": "npx wrangler pages dev dist --port 8787 --compatibility-date=2024-01-01 --compatibility-flag=nodejs_compat",
-    "pages:deploy": "npx wrangler pages deploy dist --project-name=wloc-time-capsule"
+    "dev": "npx --yes wrangler@4.110.0 dev --config=wrangler.worker.jsonc",
+    "deploy": "npx --yes wrangler@4.110.0 deploy --minify --config=wrangler.worker.jsonc",
+    "deploy:all": "npm run deploy && npm run pages:deploy",
+    "pages:dev": "npx --yes wrangler@4.110.0 pages dev dist --port 8787 --compatibility-date=2024-01-01 --compatibility-flag=nodejs_compat",
+    "pages:deploy": "npx --yes wrangler@4.110.0 pages deploy dist --project-name=wloc-time-capsule --branch=main --commit-dirty=true"
   }
 }
