@@ -31,7 +31,7 @@ test("settings fallback never persists or forwards coordinates", async () => {
   });
 });
 
-test("picker uses a nonce, own settings endpoint, and offline map default", async () => {
+test("picker uses a nonce, Apple settings endpoint, and offline map default", async () => {
   const response = await request("/");
   const csp = response.headers.get("content-security-policy");
   const html = await response.text();

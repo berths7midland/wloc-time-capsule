@@ -17,6 +17,7 @@ const allowedModuleHosts = new Set([
   "wloc.legclub.cyou",
 ]);
 const allowedPageHosts = new Set([
+  "gs-loc.apple.com",
   "nominatim.openstreetmap.org",
   "server.arcgisonline.com",
   "wloc.legclub.cyou",
