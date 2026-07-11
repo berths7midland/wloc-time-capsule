@@ -33,7 +33,9 @@ function normalizeAssetBytes(path, bytes) {
 async function collectAssets() {
   const assets = {};
   async function collectDir(sourceDir, publicDir) {
-    for (const entry of await readdir(sourceDir, { withFileTypes: true })) {
+    const entries = await readdir(sourceDir, { withFileTypes: true });
+    entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    for (const entry of entries) {
       const sourcePath = join(sourceDir, entry.name);
       const publicPath = `${publicDir}/${entry.name}`;
       if (entry.isDirectory()) {
