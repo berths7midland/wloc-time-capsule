@@ -25,6 +25,11 @@ function contentTypeFor(path) {
   return contentTypes.get(suffix) || "application/octet-stream";
 }
 
+function normalizeAssetBytes(path, bytes) {
+  if (/\.(?:jpe?g|png)$/iu.test(path)) return bytes;
+  return Buffer.from(bytes.toString("utf8").replace(/\r\n?/gu, "\n"), "utf8");
+}
+
 async function collectAssets() {
   const assets = {};
   async function collectDir(sourceDir, publicDir) {
@@ -36,7 +41,7 @@ async function collectAssets() {
         continue;
       }
       if (!entry.isFile()) continue;
-      const bytes = await readFile(sourcePath);
+      const bytes = normalizeAssetBytes(publicPath, await readFile(sourcePath));
       assets[publicPath] = {
         contentType: contentTypeFor(publicPath),
         base64: bytes.toString("base64"),
