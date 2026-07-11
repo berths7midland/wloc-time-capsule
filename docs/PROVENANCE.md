@@ -32,4 +32,7 @@ Local edits:
 - The public parse API only follows HTTPS redirects on approved Apple Maps and AMap hosts, rejects invalid coordinate ranges, and limits remote response bodies to 128 KiB.
 - Leaflet 1.9.4 JavaScript, CSS, marker images, and license are pinned under `vendor/leaflet/` and served by the account-owned Worker and Pages deployments instead of loading executable code from `unpkg.com`.
 - Upstream shortcut links were removed from published modules because their contents are controlled outside this repository.
+- Device settings requests were moved from Apple's location host to the account-owned `wloc.legclub.cyou` endpoint and all proxy modules were updated to intercept that host.
+- The picker defaults to an offline map, loads external map data only after explicit user action, and uses a per-response CSP nonce for its inline bootstrap script.
+- Local and GitHub deployment paths reject dirty worktrees and require tests, expanded link auditing, and a complete SHA-256 manifest verification.
 - Upstream evidence files under `upstream/` were not edited.

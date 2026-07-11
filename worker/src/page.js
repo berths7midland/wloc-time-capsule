@@ -1,4 +1,4 @@
-export function getPageHtml() {
+export function getPageHtml(nonce) {
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -13,7 +13,7 @@ export function getPageHtml() {
 :root { --blue:#007aff; --green:#34c759; --red:#ff3b30; --gray:#8e8e93; --bg:#f2f2f7; --orange:#ff9500; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif; background:var(--bg); }
-#map { height:50vh; width:100%; min-height:250px; }
+#map { height:50vh; width:100%; min-height:250px; background-color:#eef1f4; background-image:linear-gradient(#d9dee3 1px,transparent 1px),linear-gradient(90deg,#d9dee3 1px,transparent 1px); background-size:24px 24px; }
 .panel { padding:16px; max-width:600px; margin:0 auto; }
 .card { background:#fff; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
 .card h3 { font-size:15px; font-weight:600; margin-bottom:10px; }
@@ -63,6 +63,7 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
 .layer-btn { border:none; background:transparent; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:500; color:#333; cursor:pointer; transition:all .15s; white-space:nowrap; }
 .layer-btn.active { background:var(--blue); color:#fff; }
 .layer-btn:active { transform:scale(.95); }
+.privacy-note { padding:8px 12px; background:#fff; color:#5f6368; font-size:11px; text-align:center; border-bottom:1px solid #e5e5ea; }
 @media(max-width:480px) { #map { height:44vh; } .panel { padding:12px; } .layer-btn { padding:5px 7px; font-size:11px; } }
 </style>
 </head>
@@ -70,36 +71,38 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
 <div style="position:relative">
 <div id="map"></div>
 <div class="layer-switch">
-  <button class="layer-btn active" data-layer="satellite" onclick="switchLayer('satellite')">卫星</button>
-  <button class="layer-btn" data-layer="wgs84" onclick="switchLayer('wgs84')">WGS84</button>
-  <button class="layer-btn" data-layer="amap" onclick="switchLayer('amap')">高德</button>
-  <button class="layer-btn" data-layer="voyager" onclick="switchLayer('voyager')">彩色</button>
-  <button class="layer-btn" data-layer="standard" onclick="switchLayer('standard')">标准</button>
-  <button class="layer-btn" data-layer="dark" onclick="switchLayer('dark')">暗色</button>
+  <button class="layer-btn active" data-layer="offline">离线</button>
+  <button class="layer-btn" data-layer="satellite">卫星</button>
+  <button class="layer-btn" data-layer="wgs84">WGS84</button>
+  <button class="layer-btn" data-layer="amap">高德</button>
+  <button class="layer-btn" data-layer="voyager">彩色</button>
+  <button class="layer-btn" data-layer="standard">标准</button>
+  <button class="layer-btn" data-layer="dark">暗色</button>
 </div>
 </div>
+<div class="privacy-note">默认离线。主动选择地图图层后，地图区域会由所选数据提供商加载。</div>
 <div class="panel">
   <div class="error-banner" id="errorBanner">
     <b>模块未生效</b>
     请检查以下配置：<br>
     1. 已安装并启用 WLOC 定位模块<br>
     2. MITM 已开启且信任证书<br>
-    3. MITM 主机名包含 gs-loc.apple.com<br>
+    3. MITM 主机名包含 wloc.legclub.cyou<br>
     4. 当前网络已走代理
   </div>
   <div class="card">
     <h3>选择目标位置</h3>
     <div class="coords" id="coords">点击地图或使用下方工具选择位置</div>
     <div class="row">
-      <button class="btn btn-primary" id="saveBtn" onclick="save()">储存到设备</button>
-      <button class="btn btn-secondary" onclick="addFav()">收藏位置</button>
-      <button class="btn btn-secondary" onclick="locateMe()">当前位置</button>
+      <button class="btn btn-primary" id="saveBtn">储存到设备</button>
+      <button class="btn btn-secondary" id="addFavBtn">收藏位置</button>
+      <button class="btn btn-secondary" id="locateBtn">当前位置</button>
     </div>
   </div>
   <div class="card">
     <div class="fav-header">
       <h3>收藏的位置</h3>
-      <button class="btn btn-sm btn-secondary" onclick="clearAllFav()" id="clearAllBtn" style="display:none">清空全部</button>
+      <button class="btn btn-sm btn-secondary" id="clearAllBtn" style="display:none">清空全部</button>
     </div>
     <div id="favList" class="fav-list"></div>
   </div>
@@ -110,15 +113,15 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
       <div class="value" id="activeValue">查询中...</div>
     </div>
     <div class="row">
-      <button class="btn btn-sm btn-secondary" onclick="queryActive()">刷新</button>
-      <button class="btn btn-sm btn-danger" onclick="clearActive()">清除数据</button>
+      <button class="btn btn-sm btn-secondary" id="refreshActiveBtn">刷新</button>
+      <button class="btn btn-sm btn-danger" id="clearActiveBtn">清除数据</button>
     </div>
   </div>
   <div class="card">
     <h3>粘贴地图链接</h3>
     <div class="input-row">
       <input id="urlInput" placeholder="Apple/Google/高德地图链接 或 经纬度" />
-      <button class="btn btn-secondary" style="flex:none;min-width:56px" onclick="parseUrl()">解析</button>
+      <button class="btn btn-secondary" id="parseBtn" style="flex:none;min-width:56px">解析</button>
     </div>
     <div style="font-size:11px;color:var(--gray);margin-top:6px">支持 Apple Maps · Google Maps · 高德 · 百度 · 坐标文本</div>
   </div>
@@ -126,7 +129,7 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
     <h3>搜索地点</h3>
     <div class="input-row">
       <input id="searchInput" placeholder="输入地名（如: 上海外滩）" />
-      <button class="btn btn-secondary" style="flex:none;min-width:56px" onclick="searchPlace()">搜索</button>
+      <button class="btn btn-secondary" id="searchBtn" style="flex:none;min-width:56px">搜索</button>
     </div>
   </div>
   <div class="status" id="status">选好位置后点击「储存到设备」写入代理工具</div>
@@ -138,13 +141,13 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
     <input id="favNameInput" placeholder="输入备注名称（如: 公司、家）" maxlength="30" />
     <div style="font-size:12px;color:var(--gray);margin-bottom:12px;text-align:center" id="favModalCoords"></div>
     <div class="modal-btns">
-      <button class="btn btn-secondary" onclick="closeFavModal()">取消</button>
-      <button class="btn btn-primary" onclick="confirmFav()">保存</button>
+      <button class="btn btn-secondary" id="closeFavBtn">取消</button>
+      <button class="btn btn-primary" id="confirmFavBtn">保存</button>
     </div>
   </div>
 </div>
-<script>
-const SAVE_API = 'https://gs-loc.apple.com/wloc-settings/save';
+<script nonce="${nonce}">
+const SAVE_API = 'https://wloc.legclub.cyou/wloc-settings/save';
 const FAV_KEY = 'wloc_favorites';
 let lat = 22.544577, lon = 113.94114;
 let selected = false;
@@ -159,12 +162,14 @@ const tiles = {
   amap: L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', {maxZoom:18, subdomains:'1234', attribution:'\\u00a9 高德'}),
   voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'\\u00a9 Carto'})
 };
-let currentLayer = tiles.satellite;
-currentLayer.addTo(map);
+let currentLayer = null;
 function switchLayer(name) {
-  map.removeLayer(currentLayer);
-  currentLayer = tiles[name];
-  currentLayer.addTo(map);
+  if (currentLayer) map.removeLayer(currentLayer);
+  currentLayer = name === 'offline' ? null : tiles[name];
+  if (currentLayer) {
+    currentLayer.addTo(map);
+    toast('已启用在线地图图层');
+  }
   document.querySelectorAll('.layer-btn').forEach(b => b.classList.toggle('active', b.dataset.layer === name));
 }
 let marker = L.marker([lat, lon], {draggable:true}).addTo(map);
@@ -212,13 +217,13 @@ function renderFavs() {
   }
   el.innerHTML = favs.map((f, i) => {
     const isActive = activeLon !== null && Math.abs(f.lon - activeLon) < 0.000001 && Math.abs(f.lat - activeLat) < 0.000001;
-    return '<div class="fav-item" onclick="loadFav(' + i + ')">' +
+    return '<div class="fav-item" data-fav-index="' + i + '">' +
       '<div class="fav-info">' +
         '<div class="fav-name">' + escHtml(f.name) + '<\\/div>' +
         '<div class="fav-coords">' + f.lon.toFixed(6) + ', ' + f.lat.toFixed(6) + '<\\/div>' +
         (isActive ? '<div class="fav-active">\\u2713 当前生效<\\/div>' : '') +
       '<\\/div>' +
-      '<button class="fav-del" onclick="event.stopPropagation();delFav(' + i + ')" title="删除">\\u00d7<\\/button>' +
+      '<button class="fav-del" data-fav-index="' + i + '" title="删除">\\u00d7<\\/button>' +
     '<\\/div>';
   }).join('');
 }
@@ -404,6 +409,28 @@ document.addEventListener('paste', e => {
 document.getElementById('searchInput').addEventListener('keydown', e => { if(e.key==='Enter') searchPlace(); });
 document.getElementById('urlInput').addEventListener('keydown', e => { if(e.key==='Enter') parseUrl(); });
 document.getElementById('favNameInput').addEventListener('keydown', e => { if(e.key==='Enter') confirmFav(); });
+document.getElementById('saveBtn').addEventListener('click', save);
+document.getElementById('addFavBtn').addEventListener('click', addFav);
+document.getElementById('locateBtn').addEventListener('click', locateMe);
+document.getElementById('clearAllBtn').addEventListener('click', clearAllFav);
+document.getElementById('refreshActiveBtn').addEventListener('click', queryActive);
+document.getElementById('clearActiveBtn').addEventListener('click', clearActive);
+document.getElementById('parseBtn').addEventListener('click', parseUrl);
+document.getElementById('searchBtn').addEventListener('click', searchPlace);
+document.getElementById('closeFavBtn').addEventListener('click', closeFavModal);
+document.getElementById('confirmFavBtn').addEventListener('click', confirmFav);
+document.querySelectorAll('.layer-btn').forEach(button => {
+  button.addEventListener('click', () => switchLayer(button.dataset.layer));
+});
+document.getElementById('favList').addEventListener('click', event => {
+  const deleteButton = event.target.closest('.fav-del');
+  if (deleteButton) {
+    delFav(Number(deleteButton.dataset.favIndex));
+    return;
+  }
+  const item = event.target.closest('.fav-item');
+  if (item) loadFav(Number(item.dataset.favIndex));
+});
 
 renderFavs();
 queryActive();

@@ -14,6 +14,7 @@ export function safeDecode(s) {
 const ALLOWED_FETCH_HOSTS = new Set(["amap.com", "maps.apple.com", "maps.apple.com.cn"]);
 const ALLOWED_FETCH_SUFFIXES = [".amap.com"];
 const MAX_REMOTE_BODY_BYTES = 128 * 1024;
+const FETCH_TIMEOUT_MS = 5000;
 
 function assertSafeFetchUrl(value) {
   let url;
@@ -104,6 +105,7 @@ export async function parseCoords(raw) {
       try {
         resp = await fetch(cur, {
           redirect: "manual",
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
           headers: {
             "user-agent":
               "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/24A5370h Safari/604.1",
@@ -112,6 +114,9 @@ export async function parseCoords(raw) {
           },
         });
       } catch (e) {
+        if (e && (e.name === "AbortError" || e.name === "TimeoutError")) {
+          throw new Error("Map request timed out");
+        }
         break;
       }
       const loc = resp.headers.get("location");

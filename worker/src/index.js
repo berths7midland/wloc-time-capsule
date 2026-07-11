@@ -2,6 +2,13 @@ import { getAsset } from "./assets.generated.js";
 import { getPageHtml } from "./page.js";
 import { parseCoords, gcj02ToWgs84, round6 } from "./parse.js";
 
+const API_CORS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, OPTIONS",
+  "access-control-allow-headers": "content-type",
+  "cache-control": "no-store",
+};
+
 function text(body, status = 200, headers = {}) {
   return new Response(body, {
     status,
@@ -32,11 +39,21 @@ function assetResponse(asset, cacheControl) {
   });
 }
 
-async function handleParse(url) {
+function preflight() {
+  return new Response(null, { status: 204, headers: API_CORS });
+}
+
+function methodNotAllowed() {
+  return json({ error: "Method not allowed" }, 405, { ...API_CORS, allow: "GET, OPTIONS" });
+}
+
+async function handleParse(request, url) {
+  if (request.method === "OPTIONS") return preflight();
+  if (request.method !== "GET") return methodNotAllowed();
   const raw = url.searchParams.get("u") || "";
   const cs = (url.searchParams.get("cs") || "").toLowerCase();
   const fmt = (url.searchParams.get("format") || "").toLowerCase();
-  const cors = { "access-control-allow-origin": "*" };
+  if (raw.length > 2048) return json({ error: "Map input is too long" }, 413, API_CORS);
 
   try {
     let { lat, lon, name, src } = await parseCoords(raw);
@@ -45,11 +62,21 @@ async function handleParse(url) {
     lat = round6(lat);
     lon = round6(lon);
     name = name || "";
-    if (fmt === "json") return json({ lat, lon, name }, 200, cors);
-    return text(`lat=${lat}&lon=${lon}`, 200, cors);
+    if (fmt === "json") return json({ lat, lon, name }, 200, API_CORS);
+    return text(`lat=${lat}&lon=${lon}`, 200, API_CORS);
   } catch (e) {
-    return json({ error: String(e && e.message ? e.message : e) }, 422, cors);
+    return json({ error: String(e && e.message ? e.message : e) }, 422, API_CORS);
   }
+}
+
+function handleSettingsFallback(request) {
+  if (request.method === "OPTIONS") return preflight();
+  if (request.method !== "GET") return methodNotAllowed();
+  return json(
+    { success: false, error: "The local proxy module did not intercept this request." },
+    409,
+    API_CORS,
+  );
 }
 
 async function handleRequest(request) {
@@ -57,17 +84,19 @@ async function handleRequest(request) {
   const path = url.pathname;
 
   if (path === "/") {
-    return new Response(getPageHtml(), {
+    const nonce = crypto.randomUUID().replaceAll("-", "");
+    return new Response(getPageHtml(nonce), {
       headers: {
         "content-type": "text/html; charset=utf-8",
-        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.basemaps.cartocdn.com https://*.is.autonavi.com; connect-src 'self' https://gs-loc.apple.com https://nominatim.openstreetmap.org; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+        "content-security-policy": `default-src 'self'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.basemaps.cartocdn.com https://*.is.autonavi.com; connect-src 'self' https://wloc.legclub.cyou https://nominatim.openstreetmap.org; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
         "referrer-policy": "no-referrer",
         "x-content-type-options": "nosniff",
       },
     });
   }
 
-  if (path === "/api/parse") return handleParse(url);
+  if (path === "/api/parse") return handleParse(request, url);
+  if (path === "/wloc-settings/save") return handleSettingsFallback(request);
 
   if (path === "/wloc.jpg") {
     const asset = getAsset(path);

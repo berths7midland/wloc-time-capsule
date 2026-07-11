@@ -35,7 +35,7 @@ The Worker source lives in `worker/`.
 Important files:
 
 - `worker/src/parse.js`: parses Apple Maps / AMap links, follows redirects, extracts coordinates, and converts GCJ-02 to WGS84 when needed.
-- `worker/src/index.js`: exposes `/api/parse`.
+- `worker/src/index.js`: exposes the restricted `/api/parse` endpoint and the safe `/wloc-settings/save` fallback.
 - `worker/wrangler.worker.jsonc`: Cloudflare Workers config using the existing production service name `wloc-spoofer`.
 - `worker/wrangler.jsonc`: Cloudflare Pages config for `wloc-time-capsule`.
 
@@ -51,6 +51,8 @@ The primary production service is the Cloudflare Worker named `wloc-spoofer`; th
 
 Run `npm run deploy:all` from `worker/` after `wrangler login` to update both targets. Use `npm run deploy` or `npm run pages:deploy` when only one target needs an update.
 
+Every deployment command runs the mandatory release gate: clean-worktree checks before and after asset generation, tests, the owned-link audit, and `HASHES.sha256` verification. Dirty or uncommitted releases are rejected. After an intentional audited change, regenerate the manifest with `npm run hashes:generate`, review it, and commit it with the change.
+
 The GitHub workflow is manual-only to prevent unauthenticated pushes from creating failed or competing deployments. It requires the repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (the `CF_*` aliases are also accepted), serializes releases to both targets, pins Wrangler, and retries transient network failures up to three times.
 
 ## Audit Rules
@@ -59,3 +61,4 @@ The GitHub workflow is manual-only to prevent unauthenticated pushes from creati
 2. Do not auto-sync upstream changes.
 3. For every future update, record the upstream commit, changed files, reason, and file hashes.
 4. Keep `upstream/` immutable as evidence for this snapshot.
+5. Never bypass `npm run verify` or deploy from a dirty worktree.

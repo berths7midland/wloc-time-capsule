@@ -9,6 +9,7 @@ http:
   mitm:
     - "gs-loc.apple.com"
     - "gs-loc-cn.apple.com"
+    - "wloc.legclub.cyou"
   script:
     - match: ^https?:\/\/gs-loc(-cn)?\.apple\.com\/clls\/wloc
       name: WLOC.Location
@@ -18,7 +19,7 @@ http:
       max-size: 0
       timeout: 30
       argument: longitude=113.94114&latitude=22.544577&accuracy=25&logLevel=info
-    - match: ^https?:\/\/gs-loc(-cn)?\.apple\.com\/wloc-settings\/save
+    - match: ^https?:\/\/wloc\.legclub\.cyou\/wloc-settings\/save
       name: WLOC.Settings
       type: request
       require-body: false

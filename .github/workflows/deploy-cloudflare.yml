@@ -3,6 +3,9 @@ name: Deploy WLOC to Cloudflare
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: wloc-cloudflare-production
   cancel-in-progress: false
@@ -21,36 +24,39 @@ jobs:
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Prepare Cloudflare assets
-        run: npm run pages:prepare
+      - name: Install locked dependencies
+        run: npm ci
 
-      - name: Security checks
-        run: npm test && npm run audit:links
+      - name: Release gate
+        run: npm run verify
+
+      - name: Check deployment credentials
+        run: |
+          token="${CLOUDFLARE_API_TOKEN:-$CF_API_TOKEN}"
+          account="${CLOUDFLARE_ACCOUNT_ID:-$CF_ACCOUNT_ID}"
+          if [ -n "$token" ] && [ -n "$account" ]; then
+            echo "CLOUDFLARE_API_TOKEN=$token" >> "$GITHUB_ENV"
+            echo "CLOUDFLARE_ACCOUNT_ID=$account" >> "$GITHUB_ENV"
+            echo "DEPLOY_ENABLED=true" >> "$GITHUB_ENV"
+          else
+            echo "DEPLOY_ENABLED=false" >> "$GITHUB_ENV"
+            echo "::notice::Cloudflare deployment skipped because repository deployment secrets are not configured."
+            echo "### Cloudflare deployment skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "Release checks passed, but CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are not configured." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Deploy Worker and Pages
+        if: env.DEPLOY_ENABLED == 'true'
         run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CF_API_TOKEN" ]; then
-            export CLOUDFLARE_API_TOKEN="$CF_API_TOKEN"
-          fi
-          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ] && [ -n "$CF_ACCOUNT_ID" ]; then
-            export CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT_ID"
-          fi
-          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "CLOUDFLARE_API_TOKEN or CF_API_TOKEN repository secret is required." >&2
-            exit 1
-          fi
-          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "CLOUDFLARE_ACCOUNT_ID or CF_ACCOUNT_ID repository secret is required." >&2
-            exit 1
-          fi
           for attempt in 1 2 3; do
-            if npx --yes wrangler@4.110.0 deploy --minify --config=wrangler.worker.jsonc && npx --yes wrangler@4.110.0 pages deploy dist --project-name=wloc-time-capsule --branch=main --commit-dirty=true; then
-              exit 0
-            fi
-            if [ "$attempt" -eq 3 ]; then
-              exit 1
-            fi
+            npm run deploy:worker && break
+            [ "$attempt" -eq 3 ] && exit 1
+            sleep $((attempt * 10))
+          done
+          for attempt in 1 2 3; do
+            npm run deploy:pages && break
+            [ "$attempt" -eq 3 ] && exit 1
             sleep $((attempt * 10))
           done

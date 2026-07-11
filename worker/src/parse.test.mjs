@@ -50,3 +50,17 @@ test("rejects oversized remote responses", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("reports outbound map timeouts", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    const error = new Error("timed out");
+    error.name = "TimeoutError";
+    throw error;
+  };
+  try {
+    await assert.rejects(parseCoords("https://maps.apple.com/slow-page"), /timed out/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
