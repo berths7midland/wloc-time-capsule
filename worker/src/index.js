@@ -88,7 +88,7 @@ async function handleRequest(request) {
     return new Response(getPageHtml(nonce), {
       headers: {
         "content-type": "text/html; charset=utf-8",
-        "content-security-policy": `default-src 'self'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.basemaps.cartocdn.com https://*.is.autonavi.com; connect-src 'self' https://wloc.legclub.cyou https://nominatim.openstreetmap.org; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
+        "content-security-policy": `default-src 'self'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.basemaps.cartocdn.com https://*.is.autonavi.com; connect-src 'self' https://gs-loc.apple.com https://nominatim.openstreetmap.org; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`,
         "referrer-policy": "no-referrer",
         "x-content-type-options": "nosniff",
       },

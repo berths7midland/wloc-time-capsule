@@ -39,6 +39,6 @@ test("picker uses a nonce, own settings endpoint, and offline map default", asyn
   assert.doesNotMatch(csp, /script-src[^;]*'unsafe-inline'/u);
   assert.doesNotMatch(html, /\sonclick=/u);
   assert.match(html, /<script nonce="[a-f0-9]+">/u);
-  assert.match(html, /https:\/\/wloc\.legclub\.cyou\/wloc-settings\/save/u);
+  assert.match(html, /https:\/\/gs-loc\.apple\.com\/wloc-settings\/save/u);
   assert.match(html, /let currentLayer = null;/u);
 });

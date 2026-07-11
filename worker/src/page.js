@@ -87,7 +87,7 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
     请检查以下配置：<br>
     1. 已安装并启用 WLOC 定位模块<br>
     2. MITM 已开启且信任证书<br>
-    3. MITM 主机名包含 wloc.legclub.cyou<br>
+    3. MITM 主机名包含 gs-loc.apple.com<br>
     4. 当前网络已走代理
   </div>
   <div class="card">
@@ -147,7 +147,7 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
   </div>
 </div>
 <script nonce="${nonce}">
-const SAVE_API = 'https://wloc.legclub.cyou/wloc-settings/save';
+const SAVE_API = 'https://gs-loc.apple.com/wloc-settings/save';
 const FAV_KEY = 'wloc_favorites';
 let lat = 22.544577, lon = 113.94114;
 let selected = false;
